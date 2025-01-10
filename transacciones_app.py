@@ -43,6 +43,10 @@ df_2024 = pd.DataFrame(data_2024)
 df_2023['Año'] = 2023
 df_2024['Año'] = 2024
 
+# Calcular el canal "Total"
+df_2023['Total'] = df_2023.iloc[:, 1:-1].sum(axis=1)
+df_2024['Total'] = df_2024.iloc[:, 1:].sum(axis=1)
+
 # Combinar ambos DataFrames
 df = pd.concat([df_2023, df_2024])
 
@@ -54,14 +58,36 @@ meses_ordenados = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 df_largo['Mes'] = pd.Categorical(df_largo['Mes'], categories=meses_ordenados, ordered=True)
 
+# Configurar el fondo oscuro
+st.markdown("""
+    <style>
+        .reportview-container {
+            background-color: #2b2b2b;
+        }
+        .sidebar .sidebar-content {
+            background-color: #2b2b2b;
+        }
+        .css-1d391kg {
+            background-color: #2b2b2b;
+        }
+        .st-selectbox {
+            max-width: 350px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # Crear la interfaz en Streamlit
 st.title('Comparación de Transacciones')
 
-# Filtro por canal
-canal_seleccionado = st.selectbox('Selecciona el canal:', df_largo['Canal'].unique())
+# Filtro por canal (permitir selección múltiple)
+canales_seleccionados = st.multiselect(
+    'Selecciona el/los canal/es:',
+    df_largo['Canal'].unique(),
+    default=df_largo['Canal'].unique()
+)
 
-# Filtrar datos para el canal seleccionado
-df_filtrado = df_largo[df_largo['Canal'] == canal_seleccionado]
+# Filtrar datos para los canales seleccionados
+df_filtrado = df_largo[df_largo['Canal'].isin(canales_seleccionados)]
 
 # Crear gráfico
 fig = px.line(
@@ -69,9 +95,10 @@ fig = px.line(
     x='Mes',
     y='Transacciones',
     color='Año',
-    title=f'Comparación de Transacciones ({canal_seleccionado})',
+    title=f'Comparación de Transacciones ({", ".join(canales_seleccionados)})',
     labels={'Transacciones': 'Número de Transacciones'}
 )
 
 # Mostrar gráfico en Streamlit
 st.plotly_chart(fig)
+
